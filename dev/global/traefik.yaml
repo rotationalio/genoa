@@ -1,0 +1,48 @@
+# yaml-language-server: $schema=https://www.schemastore.org/traefik-v3.json
+service:
+  type: NodePort
+ports:
+  web:
+    port: 30000
+    nodePort: 30000
+
+  websecure:
+    port: 30001
+    nodePort: 30001
+
+  postgres:
+    port: 30002
+    nodePort: 30002
+
+  control:
+    port: 8000
+    nodePort: 8000
+
+nodeSelector:
+  kubernetes.io/hostname: rotational-local-1-control-plane
+tolerations:
+- operator: Exists
+
+api:
+  dashboard: false
+
+ingressClass:
+  enabled: false
+
+providers:
+  kubernetesCRD:
+    enabled: true
+  kubernetesIngress:
+    enabled: false
+  kubernetesGateway:
+    enabled: true
+    experimentalChannel: true
+
+log:
+  level: INFO
+accessLog:
+  enabled: false
+
+metrics:
+  prometheus:
+    enabled: false

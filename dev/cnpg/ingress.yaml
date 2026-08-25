@@ -1,0 +1,29 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: postgres-gateway
+  namespace: global
+spec:
+  gatewayClassName: traefik
+  listeners:
+    - name: postgres
+      protocol: TCP
+      port: 30002
+      allowedRoutes:
+        namespaces:
+          from: All
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TCPRoute
+metadata:
+  name: postgres-tcp-route
+  namespace: cnpg
+spec:
+  parentRefs:
+  - name: postgres-gateway
+    namespace: global
+    sectionName: postgres
+  rules:
+  - backendRefs:
+      - name: postgres-rw
+        port: 5432

@@ -1,0 +1,68 @@
+repositories:
+- name: cnpg
+  url: https://cloudnative-pg.github.io/charts
+- name: traefik
+  url: https://traefik.github.io/charts
+
+helmDefaults:
+  wait: true
+  timeout: 600
+  createNamespace: true
+
+releases:
+- name: traefik
+  namespace: global
+  chart: traefik/traefik
+  version: ~41.3
+  values:
+    - global/traefik.yaml
+  hooks:
+  - events: ["presync"]
+    showlogs: true
+    command: "kubectl"
+    args:
+    - "apply"
+    - "--server-side"
+    - "-f"
+    - "https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.1/experimental-install.yaml"
+
+- name: cnpg
+  namespace: cnpg
+  chart: cnpg/cloudnative-pg
+  version: ~0.27
+  values:
+  - cnpg/values.yaml
+
+- name: postgres
+  namespace: cnpg
+  chart: cnpg/cluster
+  version: ~0.4
+  values:
+    - cnpg/postgres.yaml
+  needs:
+  - cnpg/cnpg
+  - global/traefik
+  hooks:
+  - events: ["presync"]
+    showlogs: true
+    command: "kubectl"
+    args:
+    - "apply"
+    - "-f"
+    - "cnpg/postgres-credentials.yaml"
+  - events: ["postsync"]
+    showlogs: true
+    command: "kubectl"
+    args:
+    - "apply"
+    - "-f"
+    - "cnpg/ingress.yaml"
+  - events: ["preuninstall"]
+    showlogs: true
+    command: "kubectl"
+    args:
+    - "delete"
+    - "-f"
+    - "cnpg/postgres-credentials.yaml"
+    - "-f"
+    - "cnpg/ingress.yaml"
