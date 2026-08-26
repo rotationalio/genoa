@@ -1,0 +1,18 @@
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: rotational-local-1
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30000
+        hostPort: 80
+        protocol: TCP
+      - containerPort: 30001
+        hostPort: 443
+        protocol: TCP
+      - containerPort: 30002
+        hostPort: 7654
+        protocol: TCP
+    extraMounts:
+      - hostPath: ./dev/kind/data
+        containerPath: /var/local-path-provisioner

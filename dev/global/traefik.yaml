@@ -1,0 +1,67 @@
+# yaml-language-server: $schema=https://www.schemastore.org/traefik-v3.json
+service:
+  spec:
+    type: NodePort
+
+# `port` is the entrypoint/container port, `exposedPort` is the Service port and
+# `nodePort` is what kind maps to the host. Gateway listeners must reference `port`.
+ports:
+  web:
+    port: 30000
+    exposedPort: 80
+    protocol: TCP
+    nodePort: 30000
+    expose:
+      default: true
+
+  websecure:
+    port: 30001
+    exposedPort: 443
+    protocol: TCP
+    nodePort: 30001
+    expose:
+      default: true
+
+  postgres:
+    port: 30002
+    exposedPort: 7654
+    protocol: TCP
+    nodePort: 30002
+    expose:
+      default: true
+
+# The postgres listener lives on its own Gateway in cnpg/ingress.yaml.
+gateway:
+  listeners:
+    web:
+      port: 30000
+      protocol: HTTP
+
+nodeSelector:
+  kubernetes.io/hostname: rotational-local-1-control-plane
+tolerations:
+- operator: Exists
+
+api:
+  dashboard: false
+
+ingressClass:
+  enabled: false
+
+providers:
+  kubernetesCRD:
+    enabled: true
+  kubernetesIngress:
+    enabled: false
+  kubernetesGateway:
+    enabled: true
+    experimentalChannel: true
+
+log:
+  level: INFO
+accessLog:
+  enabled: false
+
+metrics:
+  prometheus:
+    enabled: false

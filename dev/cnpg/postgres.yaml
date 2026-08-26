@@ -1,0 +1,18 @@
+fullnameOverride: postgres
+type: postgresql
+mode: standalone
+version:
+  postgresql: "18"
+cluster:
+  instances: 1
+  storage:
+    size: 1Gi
+  postgresql:
+    parameters:
+      max_connections: "8"
+  enableSuperuserAccess: true
+  superuserSecret: postgres-credentials
+monitoring:
+  enabled: false
+backups:
+  enabled: false
