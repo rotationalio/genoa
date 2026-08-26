@@ -8,6 +8,7 @@ import (
 	"go.rtnl.ai/genoa/errors"
 	"go.rtnl.ai/x/dsn"
 
+	"github.com/jackc/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -92,33 +93,41 @@ func (a *Admin) CreateDatabase(ctx context.Context, target *dsn.DSN) (err error)
 	return nil
 }
 
+// NOTE: database identifiers such as roles, schemas, tables names, etc. cannot be
+// parameterized with placeholders, only values can be. Therefore we use pgx.Identifier
+// and its sanitize method to escape the identifiers and string formatting to create
+// the SQL statements. This still ensures that the identifiers are properly escaped to
+// prevent SQL injection attacks.
 const (
-	createRoleSQL     = `CREATE ROLE $1 WITH LOGIN PASSWORD $2 NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS`
-	createDatabaseSQL = `CREATE DATABASE $1 OWNER $2 ENCODING 'UTF8'`
-	revokePublicSQL   = `REVOKE ALL ON DATABASE $1 FROM PUBLIC`
-	grantConnectSQL   = `GRANT CONNECT, TEMPORARY ON DATABASE $1 to $2`
+	createRoleSQL     = `CREATE ROLE %s WITH LOGIN PASSWORD %s NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS`
+	createDatabaseSQL = `CREATE DATABASE %s OWNER %s ENCODING 'UTF8'`
+	revokePublicSQL   = `REVOKE ALL ON DATABASE %s FROM PUBLIC`
+	grantConnectSQL   = `GRANT CONNECT, TEMPORARY ON DATABASE %s TO %s`
 )
 
 // With the admin connection, create the database and role and perform grant/revoke operations.
 // NOTE: these operations cannot be performed inside a transaction as they cannot be rolled back.
 func (a *Admin) createDatabase(ctx context.Context, target *dsn.DSN) (err error) {
 	// Create the role
-	if _, err = a.ExecContext(ctx, createRoleSQL, target.User.Username, target.User.Password); err != nil {
+	rolename := pgx.Identifier{target.User.Username}.Sanitize()
+	password := quoteEscape(pgx.Identifier{target.User.Password}.Sanitize())
+	if _, err = a.ExecContext(ctx, fmt.Sprintf(createRoleSQL, rolename, password)); err != nil {
 		return fmt.Errorf("failed to create role: %w", err)
 	}
 
 	// Create the database
-	if _, err = a.ExecContext(ctx, createDatabaseSQL, target.Path, target.User.Username); err != nil {
+	database := pgx.Identifier{target.Path}.Sanitize()
+	if _, err = a.ExecContext(ctx, fmt.Sprintf(createDatabaseSQL, database, rolename)); err != nil {
 		return fmt.Errorf("failed to create database: %w", err)
 	}
 
 	// Revoke public access to the database
-	if _, err = a.ExecContext(ctx, revokePublicSQL, target.Path); err != nil {
+	if _, err = a.ExecContext(ctx, fmt.Sprintf(revokePublicSQL, database)); err != nil {
 		return fmt.Errorf("failed to revoke public access: %w", err)
 	}
 
 	// Grant connect and temporary access to the role
-	if _, err = a.ExecContext(ctx, grantConnectSQL, target.Path, target.User.Username); err != nil {
+	if _, err = a.ExecContext(ctx, fmt.Sprintf(grantConnectSQL, database, rolename)); err != nil {
 		return fmt.Errorf("failed to grant connect and temporary access: %w", err)
 	}
 
@@ -127,8 +136,8 @@ func (a *Admin) createDatabase(ctx context.Context, target *dsn.DSN) (err error)
 
 const (
 	revokePublicSchemaSQL = `REVOKE ALL ON SCHEMA public FROM PUBLIC`
-	grantAllSchemaSQL     = `GRANT ALL ON SCHEMA public TO $1`
-	alterSchemaSQL        = `ALTER SCHEMA public OWNER TO $1`
+	grantAllSchemaSQL     = `GRANT ALL ON SCHEMA public TO %s`
+	alterSchemaSQL        = `ALTER SCHEMA public OWNER TO %s`
 )
 
 // Open a new connection to the created database and perform schema grant/revoke operations.
@@ -151,14 +160,66 @@ func (a *Admin) modifySchema(ctx context.Context, target *dsn.DSN) (err error) {
 	}
 
 	// Grant all access to the schema to the role
-	if _, err = tx.Exec(grantAllSchemaSQL, target.User.Username); err != nil {
+	rolename := pgx.Identifier{target.User.Username}.Sanitize()
+	if _, err = tx.Exec(fmt.Sprintf(grantAllSchemaSQL, rolename)); err != nil {
 		return fmt.Errorf("failed to grant all access to the schema: %w", err)
 	}
 
 	// Alter the schema owner to the role
-	if _, err = tx.Exec(alterSchemaSQL, target.User.Username); err != nil {
+	if _, err = tx.Exec(fmt.Sprintf(alterSchemaSQL, rolename)); err != nil {
 		return fmt.Errorf("failed to alter the schema owner: %w", err)
 	}
 
 	return tx.Commit()
+}
+
+const (
+	squote = '\''
+)
+
+// quoteEscape replaces the first and last double quotes with single quotes and escapes
+// any single quotes within the string. This method is necessary because the
+// pgx.Identifier.Sanitize method returns a postgresql identifier rather than a string
+// value which can't be used for passwords (and neither can parameterized placeholders).
+//
+// I really hate that we have to do this -- but as stack overflow says, the reason
+// drivers don't provide escape methods is because they don't want to make it seem like
+// a good idea to use them.
+func quoteEscape(s string) string {
+	out := make([]rune, 0, len(s)+2)
+	for i, chr := range s {
+		switch i {
+		case 0:
+			if chr == '"' {
+				// Replace the first double quote with a single quote
+				out = append(out, squote)
+			} else if chr == squote {
+				// Prepend a single quote and escape the single quote
+				out = append(out, squote, squote, chr)
+			} else {
+				// Prepend a single quote and add the character
+				out = append(out, squote, chr)
+			}
+		case len(s) - 1:
+			if chr == '"' {
+				// Replace the last double quote with a single quote
+				out = append(out, squote)
+			} else if chr == squote {
+				// Escape the single quote and append a closing single quote
+				out = append(out, squote, chr, squote)
+			} else {
+				// Append the character and a closing single quote
+				out = append(out, chr, squote)
+			}
+		default:
+			if chr == squote {
+				// Escape the single quote
+				out = append(out, squote, chr)
+			} else {
+				// Add the character without modification
+				out = append(out, chr)
+			}
+		}
+	}
+	return string(out)
 }
