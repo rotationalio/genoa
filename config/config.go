@@ -9,6 +9,7 @@ import (
 type Config struct {
 	LocalAccess bool   `split_words:"true" default:"false" desc:"set to true to allow local access to the cluster without a service account"`
 	Namespace   string `split_words:"true" default:"endeavor" desc:"the namespace to use for the genoa operation"`
+	DatabaseURL string `split_words:"true" default:"" desc:"the admin database dsn to use to manage roles and databases"`
 }
 
 const Prefix = "genoa"
