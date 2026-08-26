@@ -1,14 +1,26 @@
 package config
 
 import (
+	"log/slog"
 	"sync"
 
 	"go.rtnl.ai/confire"
+	"go.rtnl.ai/x/rlog"
 )
 
 type Config struct {
-	LocalAccess bool   `split_words:"true" default:"false" desc:"set to true to allow local access to the cluster without a service account"`
-	Namespace   string `split_words:"true" default:"endeavor" desc:"the namespace to use for the genoa operation"`
+	LogLevel       rlog.LevelDecoder `split_words:"true" default:"info" desc:"specify the verbosity of logging (trace, debug, info, warn, error, fatal, or panic)"`
+	ConsoleLog     bool              `split_words:"true" default:"false" desc:"if true logs human readable text output instead of json"`
+	LocalAccess    bool              `split_words:"true" default:"false" desc:"set to true to allow local access to the cluster without a service account"`
+	Namespace      string            `split_words:"true" default:"endeavor" desc:"the namespace to use for the genoa operation"`
+	DatabaseURL    string            `split_words:"true" default:"" desc:"the admin database dsn to use to manage roles and databases"`
+	EnsureDatabase EnsureDatabase    `split_words:"true"`
+}
+
+type EnsureDatabase struct {
+	Enabled    bool   `env:"ENDEAVOR_ENSURE_DATABASE_ENABLED" default:"false" desc:"set to true to run the ensure database operation"`
+	Name       string `env:"ENDEAVOR_ENSURE_DATABASE_NAME" desc:"the name of the endeavor application to ensure the database for"`
+	SecretName string `env:"ENDEAVOR_ENSURE_DATABASE_SECRET_NAME" desc:"the name of the secret to use to store the database credentials"`
 }
 
 const Prefix = "genoa"
@@ -48,6 +60,11 @@ func Namespace() string {
 		return ""
 	}
 	return conf.Namespace
+}
+
+// GetLogLevel returns the log level for the config.
+func (c Config) GetLogLevel() slog.Level {
+	return c.LogLevel.Level()
 }
 
 //============================================================================

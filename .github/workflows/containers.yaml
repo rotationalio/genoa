@@ -9,6 +9,8 @@ on:
     branches:
       - main
 
+permissions: read-all
+
 # Cancel earlier runs of this workflow on the same PR when a new commit is pushed.
 # Pushes to main/tags keep all runs (cancel-in-progress only fires for pull_request events).
 concurrency:
@@ -28,6 +30,7 @@ jobs:
         run: |
           echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
           echo "revision=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          echo "buildDate=$(date -u +%Y-%m-%d)" >> $GITHUB_OUTPUT
 
       - name: Docker Metadata
         id: meta
@@ -78,3 +81,4 @@ jobs:
           platforms: linux/amd64,linux/arm64
           build-args: |
             GIT_REVISION=${{ steps.vars.outputs.revision }}
+            BUILD_DATE=${{ steps.vars.outputs.buildDate }}

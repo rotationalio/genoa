@@ -6,7 +6,10 @@ import (
 )
 
 var (
-	ErrNotFound = errors.New("object not found")
+	ErrNotFound           = errors.New("object not found")
+	ErrMissingDatabaseURL = errors.New("admin database url is required for this operation")
+	ErrInvalidCreateDSN   = errors.New("dsn requires database name, username, and password")
+	ErrInvalidName        = errors.New("name is not valid for this operation")
 )
 
 // In is a helper function to check if an error is in a list of errors.
