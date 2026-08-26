@@ -12,6 +12,7 @@ nodes:
         protocol: TCP
       - containerPort: 30002
         hostPort: 7654
+        protocol: TCP
     extraMounts:
       - hostPath: ./dev/kind/data
         containerPath: /var/local-path-provisioner

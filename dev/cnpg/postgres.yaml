@@ -10,8 +10,9 @@ cluster:
   postgresql:
     parameters:
       max_connections: "8"
+  enableSuperuserAccess: true
+  superuserSecret: postgres-credentials
 monitoring:
   enabled: false
-superuserSecret: postgres-credentials
 backups:
   enabled: false
