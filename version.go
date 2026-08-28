@@ -39,6 +39,21 @@ func Version(short bool) string {
 	return vers.String()
 }
 
+// VersionCheck ensures that the specified version is compatible with the current version.
+func VersionCheck(other semver.Version) error {
+	if other.Major != VersionMajor {
+		return fmt.Errorf("current major version %d is not compatible with specified major version %d", VersionMajor, other.Major)
+	}
+
+	if other.Minor > VersionMinor {
+		return fmt.Errorf("current version %s is not as up-to-date as specified version %s", Version(true), other.String())
+	} else if other.Minor == VersionMinor && other.Patch > VersionPatch {
+		return fmt.Errorf("current version %s is not as up-to-date as specified version %s", Version(true), other.String())
+	}
+
+	return nil
+}
+
 func PreRelease() string {
 	if VersionReleaseLevel != "" && VersionReleaseLevel != "final" {
 		if VersionReleaseNumber > 0 {

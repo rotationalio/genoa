@@ -43,8 +43,8 @@ func EnsureDatabase(ctx context.Context, conf config.Config) (err error) {
 	defer conn.Close()
 
 	var (
-		name       = conf.EnsureDatabase.Name
-		secretName = conf.EnsureDatabase.SecretName
+		name       = "todo"
+		secretName = "todo"
 	)
 
 	if secretName == "" {
