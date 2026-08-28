@@ -8,6 +8,8 @@ const (
 	ExitSuccess int = iota
 	ExitFailure
 	ExitConfig
+	ExitGenoa
+	ExitCommand
 )
 
 func Exit(code int, err error) error {

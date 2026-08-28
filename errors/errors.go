@@ -10,6 +10,10 @@ var (
 	ErrMissingDatabaseURL = errors.New("admin database url is required for this operation")
 	ErrInvalidCreateDSN   = errors.New("dsn requires database name, username, and password")
 	ErrInvalidName        = errors.New("name is not valid for this operation")
+	ErrInvalidVersion     = errors.New("version is not valid")
+	ErrUnknownCommand     = errors.New("unknown command kind")
+	ErrInvalidArgs        = errors.New("command args cannot be unmarshaled")
+	ErrAlreadyRegistered  = errors.New("command already registered")
 )
 
 // In is a helper function to check if an error is in a list of errors.
