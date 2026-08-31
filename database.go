@@ -126,9 +126,9 @@ func (e *EnsureDatabase) Resolve(ctx context.Context) (err error) {
 		// If the database name is sill not set, use the release name.
 		if e.Database.Name == "" {
 			rlog.Debug("using release name as database name")
-			e.Database.Name = e.Name("")
+			e.Database.Name = undash(e.Name(""))
 		} else {
-			rlog.Debug("using databaseURL secret for database name")
+			rlog.Debug("using database name from database URL")
 		}
 	} else {
 		rlog.Debug("using database name from resource")
@@ -146,12 +146,19 @@ func (e *EnsureDatabase) Resolve(ctx context.Context) (err error) {
 
 		// If the username is still not set, use the dsn user name as the user name.
 		if e.Database.Username.Value == "" {
-			e.Database.Username.Value = e.dsn.User.Username
-		}
+			if e.dsn.User != nil {
+				e.Database.Username.Value = e.dsn.User.Username
+			}
 
-		// If the username is still not set, use the database name as the user name.
-		if e.Database.Username.Value == "" {
-			e.Database.Username.Value = e.Database.Name
+			// If the username is still not set, use the database name as the user name.
+			if e.Database.Username.Value == "" {
+				rlog.Debug("using database name/release-name as database username")
+				e.Database.Username.Value = e.Database.Name
+			} else {
+				rlog.Debug("using database username from database URL")
+			}
+		} else {
+			rlog.Debug("using database username from secret")
 		}
 	} else {
 		rlog.Debug("using database username from resource")
@@ -166,13 +173,17 @@ func (e *EnsureDatabase) Resolve(ctx context.Context) (err error) {
 
 		// If the password is still not set, use the dsn password as the password.
 		if e.Database.Password.Value == "" {
-			e.Database.Password.Value = e.dsn.User.Password
+			if e.dsn.User != nil {
+				e.Database.Password.Value = e.dsn.User.Password
+			}
 
 			// If the password is still not set, generate a new password.
 			// TODO: do we need to URL escape the database password?
 			if e.Database.Password.Value == "" {
 				rlog.Debug("generating a new strong database password")
 				e.Database.Password.Value = db.Password()
+			} else {
+				rlog.Debug("using database password from database URL")
 			}
 		} else {
 			rlog.Debug("using database password from secret")
@@ -226,7 +237,7 @@ func (e *EnsureDatabase) FetchSecrets(ctx context.Context) (err error) {
 	if e.Database.Username == nil {
 		e.Database.Username = &SecretResource{}
 	}
-	e.Database.Username.Resolve(&SecretResource{SecretName: name, SecretKey: "databaseUsername", Value: name})
+	e.Database.Username.Resolve(&SecretResource{SecretName: name, SecretKey: "databaseUsername"})
 
 	if e.Database.Password == nil {
 		e.Database.Password = &SecretResource{}
@@ -308,4 +319,9 @@ func (e *EnsureDatabase) Validate(ctx context.Context) (err error) {
 	}
 
 	return err
+}
+
+// Replaces all dashes in the name with underscores.
+func undash(name string) string {
+	return strings.ReplaceAll(name, "-", "_")
 }

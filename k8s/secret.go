@@ -81,6 +81,10 @@ func (s *Secrets) Dump() (obj *corev1.Secret, err error) {
 		secret.Data[key] = []byte(val)
 	}
 
+	if secret.Annotations == nil {
+		secret.Annotations = make(map[string]string)
+	}
+
 	if _, ok := secret.Annotations[AKManagedBy]; !ok {
 		secret.Annotations[AKManagedBy] = AVManagedBy
 	}
@@ -89,14 +93,23 @@ func (s *Secrets) Dump() (obj *corev1.Secret, err error) {
 }
 
 func (s *Secrets) Label(key, value string) {
+	if s.Labels == nil {
+		s.Labels = make(map[string]string)
+	}
 	s.Labels[key] = value
 }
 
 func (s *Secrets) Annotation(key, value string) {
+	if s.Annotations == nil {
+		s.Annotations = make(map[string]string)
+	}
 	s.Annotations[key] = value
 }
 
 func (s *Secrets) Secret(key string, value []byte) {
+	if s.Data == nil {
+		s.Data = make(map[string]Secret)
+	}
 	s.Data[key] = Secret(value)
 }
 
