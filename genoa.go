@@ -28,11 +28,19 @@ var (
 	commandRegistry map[string]Constructor
 )
 
+func init() {
+	Register(func() Command { return new(EnsureDatabase) })
+}
+
 func Register(constructor Constructor) {
 	cmd := constructor()
 	kind := slugify.Slugify(cmd.Kind())
 	if _, ok := commandRegistry[kind]; ok {
 		panic(fmt.Errorf("%w: %q", errors.ErrAlreadyRegistered, kind))
+	}
+
+	if commandRegistry == nil {
+		commandRegistry = make(map[string]Constructor)
 	}
 	commandRegistry[kind] = constructor
 }
@@ -60,7 +68,7 @@ func Run(ctx context.Context, c *cli.Command) (err error) {
 		commands++
 		rlog.Debug("running command", slog.Int("sequence", commands), slog.String("command", cmd.Kind()))
 
-		if cerr := cmd.Run(ctx); cerr != nil {
+		if cerr := cmd.Run(ctx, conf); cerr != nil {
 			err = errors.Join(err, cerr)
 			failures++
 		}
@@ -144,13 +152,6 @@ type Genoa struct {
 	Release  string      `json:"release" yaml:"release"`
 	Commands []*Resource `json:"commands,omitempty" yaml:"commands,omitempty"`
 	commands []Command
-}
-
-// Resource is a generic object that can be deserialized from the args into an object
-// registered to the Kind specified (case insensitive).
-type Resource struct {
-	Kind string          `json:"kind" yaml:"kind"`
-	Args json.RawMessage `json:"args" yaml:"args"`
 }
 
 func (g *Genoa) Iter() iter.Seq[Command] {

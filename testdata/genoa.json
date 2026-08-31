@@ -1,5 +1,29 @@
 {
   "version": "1.0.0",
   "release": "example",
-  "commands": []
+  "commands": [
+    {
+      "kind": "Foo",
+      "args": {
+        "name": "Charlie",
+        "color": "red",
+        "size": 8
+      }
+    },
+    {
+      "kind": "BAR",
+      "args": {
+        "title": "The Eagle Flies at Dawn",
+        "timestamp": "2026-01-01T00:00:00Z"
+      }
+    },
+    {
+      "kind": "foo",
+      "args": {
+        "name": "Daisy",
+        "color": "blue",
+        "size": 12
+      }
+    }
+  ]
 }

@@ -12,6 +12,7 @@ type Config struct {
 	LocalAccess  bool              `split_words:"true" default:"false" desc:"set to true to allow local access to the cluster without a service account"`
 	LogLevel     rlog.LevelDecoder `split_words:"true" default:"info" desc:"specify the verbosity of logging (trace, debug, info, warn, error, fatal, or panic)"`
 	ConsoleLog   bool              `split_words:"true" default:"false" desc:"if true logs human readable text output instead of json"`
+	Release      string            `split_words:"true" default:"" desc:"the release to use for the genoa operation as set by argocd or helm"`
 	Namespace    string            `split_words:"true" default:"endeavor" desc:"the namespace to use for the genoa operation"`
 	ResourcePath string            `split_words:"true" default:"genoa.json" desc:"the path to the genoa resource file to execute"`
 	DatabaseURL  string            `split_words:"true" default:"" desc:"the admin database dsn to use to manage roles and databases"`
