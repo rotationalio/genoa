@@ -55,12 +55,16 @@ func OpenAdmin(ctx context.Context, databaseURL string) (admin *Admin, err error
 	if conn, err = Open(ctx, databaseURL); err != nil {
 		return nil, err
 	}
-	return &Admin{DB: conn}, nil
+
+	admin = &Admin{DB: conn}
+	admin.DSN, _ = dsn.Parse(databaseURL)
+	return admin, nil
 }
 
 // Admin is a database connection that is used to create and manage roles and databases.
 type Admin struct {
 	*sql.DB
+	DSN *dsn.DSN
 }
 
 // Checks if the database exists.

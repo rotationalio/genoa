@@ -18,6 +18,7 @@ var testEnv = contest.Env{
 	"GENOA_LOG_LEVEL":     "debug",
 	"GENOA_CONSOLE_LOG":   "true",
 	"GENOA_RESOURCE_PATH": "testdata/genoa.yaml",
+	"GENOA_RELEASE":       "test",
 	"GENOA_NAMESPACE":     "genoa",
 	"GENOA_DATABASE_URL":  "postgres://postgres:postgres@localhost:5432/endeavor?sslmode=disable",
 }
@@ -28,6 +29,7 @@ var validConfig = config.Config{
 	LocalAccess:  true,
 	LogLevel:     rlog.LevelDecoder(rlog.LevelDebug),
 	ConsoleLog:   true,
+	Release:      "test",
 	Namespace:    "genoa",
 	ResourcePath: "testdata/genoa.yaml",
 	DatabaseURL:  "postgres://postgres:postgres@localhost:5432/endeavor?sslmode=disable",

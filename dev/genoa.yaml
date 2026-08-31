@@ -1,3 +1,6 @@
 version: "1.0.0"
 release: "dev"
-commands: []
+commands:
+- kind: EnsureDatabase
+  args:
+    release: demo-endeavor

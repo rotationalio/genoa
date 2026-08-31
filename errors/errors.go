@@ -7,6 +7,7 @@ import (
 
 var (
 	ErrNotFound           = errors.New("object not found")
+	ErrMissingRelease     = errors.New("release name is required for this operation")
 	ErrMissingDatabaseURL = errors.New("admin database url is required for this operation")
 	ErrInvalidCreateDSN   = errors.New("dsn requires database name, username, and password")
 	ErrInvalidName        = errors.New("name is not valid for this operation")
