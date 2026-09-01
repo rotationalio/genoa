@@ -8,6 +8,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/urfave/cli/v3 v3.11.0
 	go.rtnl.ai/confire v1.2.0
+	go.rtnl.ai/ulid v1.3.0
 	go.rtnl.ai/x v1.20.0
 	k8s.io/api v0.36.4
 	k8s.io/apimachinery v0.36.4

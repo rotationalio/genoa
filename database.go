@@ -25,6 +25,10 @@ type EnsureDatabase struct {
 	conf config.Config // Configuration for the operation.
 }
 
+func (e *EnsureDatabase) Kind() string {
+	return "EnsureDatabase"
+}
+
 func (e *EnsureDatabase) Run(ctx context.Context, conf config.Config) (err error) {
 	// Ensure there is a release name to use for the creation of resources.
 	e.conf = conf
@@ -86,10 +90,6 @@ func (e *EnsureDatabase) Run(ctx context.Context, conf config.Config) (err error
 
 	rlog.Info("endeavor database exists and is accessible", slog.String("database", e.Database.Name), slog.String("secret", e.Database.URL.SecretName))
 	return nil
-}
-
-func (e *EnsureDatabase) Kind() string {
-	return "EnsureDatabase"
 }
 
 // Resolution order of the database resource is as follows:

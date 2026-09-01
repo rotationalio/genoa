@@ -4,3 +4,8 @@ commands:
 - kind: EnsureDatabase
   args:
     release: demo-endeavor
+- kind: JWKSRotation
+  args:
+    jwksSecret: demo-quarterdeck-jwks
+    quarterdeck:
+      secretName: demo-quarterdeck

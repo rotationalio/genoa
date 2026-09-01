@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"sync"
+	"time"
 
 	"go.rtnl.ai/genoa/errors"
 	"go.rtnl.ai/genoa/k8s"
@@ -138,4 +139,28 @@ func GetOrCreateSecret(ctx context.Context, resource *SecretResource) (secret *k
 	// Ensure the secret is cached
 	secretCache[secret.Name] = secret
 	return secret, nil
+}
+
+//============================================================================
+// Duration Serialization as a String
+//============================================================================
+
+type Duration struct {
+	time.Duration
+}
+
+func (d Duration) MarshalJSON() ([]byte, error) {
+	return json.Marshal(d.String())
+}
+
+func (d *Duration) UnmarshalJSON(data []byte) (err error) {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+
+	if d.Duration, err = time.ParseDuration(s); err != nil {
+		return err
+	}
+	return nil
 }
