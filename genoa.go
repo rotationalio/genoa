@@ -30,6 +30,7 @@ var (
 
 func init() {
 	Register(func() Command { return new(EnsureDatabase) })
+	Register(func() Command { return new(JWKSRotation) })
 }
 
 func Register(constructor Constructor) {
