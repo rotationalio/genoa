@@ -9,3 +9,10 @@ commands:
     jwksSecret: demo-quarterdeck-jwks
     quarterdeck:
       secretName: demo-quarterdeck
+- kind: CofferRotation
+  args:
+    release: demo-endeavor
+    namespaces:
+    - ""
+    - capabilities
+    - providers

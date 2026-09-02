@@ -126,8 +126,10 @@ func GetOrCreateSecret(ctx context.Context, resource *SecretResource) (secret *k
 	// If the secret is nil, we need to create it.
 	if secret == nil {
 		secret = &k8s.Secrets{
-			Name: resource.SecretName,
-			Data: make(map[string]k8s.Secret),
+			Name:        resource.SecretName,
+			Labels:      make(map[string]string),
+			Annotations: make(map[string]string),
+			Data:        make(map[string]k8s.Secret),
 		}
 	}
 

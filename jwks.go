@@ -33,6 +33,15 @@ const (
 	defaultJWKSMountPath      = "/data/jwks"
 )
 
+// JWKS annotation keys
+const (
+	jwksRotatedOnAnnotation     = "genoa.rtnl.ai/jwks-rotated-on"
+	jwksMaxKeysAnnotation       = "genoa.rtnl.ai/jwks-max-keys"
+	jwksRotationAnnotation      = "genoa.rtnl.ai/jwks-rotation-interval"
+	jwksConfigSecretAnnotation  = "genoa.rtnl.ai/jwks-config-secret"
+	jwksRelatedSecretAnnotation = "genoa.rtnl.ai/jwks-secret"
+)
+
 var (
 	JWKSKeyRegex = regexp.MustCompile(`^[0-7][0-9A-HJKMNP-TV-Z]{25}\.pem$`)
 )
@@ -82,7 +91,7 @@ func (j *JWKSRotation) Run(ctx context.Context, conf config.Config) (err error) 
 		}
 
 		// Add the annotation to the secret
-		j.keys.Annotation("genoa.rtnl.ai/jwks-rotated-on", time.Now().Format(time.RFC3339))
+		j.keys.Annotation(jwksRotatedOnAnnotation, time.Now().Format(time.RFC3339))
 		validKeys = append(validKeys, key)
 		rotated = true
 	}
@@ -105,11 +114,11 @@ func (j *JWKSRotation) Run(ctx context.Context, conf config.Config) (err error) 
 	}
 
 	// Update the secret annotations
-	j.keys.Annotations["genoa.rtnl.ai/jwks-max-keys"] = strconv.Itoa(j.MaxKeys)
-	j.keys.Annotations["genoa.rtnl.ai/jwks-rotation-interval"] = j.Rotation.String()
+	j.keys.Annotation(jwksMaxKeysAnnotation, strconv.Itoa(j.MaxKeys))
+	j.keys.Annotation(jwksRotationAnnotation, j.Rotation.String())
 
 	if j.Quarterdeck.SecretName != j.JWKSSecret {
-		j.keys.Annotations["genoa.rtnl.ai/jwks-config-secret"] = j.Quarterdeck.SecretName
+		j.keys.Annotation(jwksConfigSecretAnnotation, j.Quarterdeck.SecretName)
 	}
 
 	// Save the signing keys secret
@@ -125,7 +134,7 @@ func (j *JWKSRotation) Run(ctx context.Context, conf config.Config) (err error) 
 
 	qds.Data[j.Quarterdeck.SecretKey] = k8s.Secret(validKeys.String(j.MountPath))
 	if j.Quarterdeck.SecretName != j.JWKSSecret {
-		qds.Annotation("genoa.rtnl.ai/jwks-secret", j.JWKSSecret)
+		qds.Annotation(jwksRelatedSecretAnnotation, j.JWKSSecret)
 	}
 
 	if err = qds.Save(ctx); err != nil {
