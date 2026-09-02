@@ -31,13 +31,15 @@ var (
 func init() {
 	Register(func() Command { return new(EnsureDatabase) })
 	Register(func() Command { return new(JWKSRotation) })
+	Register(func() Command { return new(CofferRotation) })
 }
 
 func Register(constructor Constructor) {
 	cmd := constructor()
 	kind := slugify.Slugify(cmd.Kind())
 	if _, ok := commandRegistry[kind]; ok {
-		panic(fmt.Errorf("%w: %q", errors.ErrAlreadyRegistered, kind))
+		rlog.Warn("command already registered", slog.String("command", kind))
+		return
 	}
 
 	if commandRegistry == nil {
