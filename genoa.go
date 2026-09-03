@@ -82,7 +82,7 @@ func Run(ctx context.Context, c *cli.Command) (err error) {
 		return errors.Exit(errors.ExitCommand, err)
 	}
 
-	rlog.Debug("genoa bootstrap completed successfully", slog.Int("commands", commands))
+	rlog.Info("genoa bootstrap completed successfully", slog.Int("commands", commands))
 	return nil
 }
 
