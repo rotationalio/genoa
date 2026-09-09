@@ -1,0 +1,200 @@
+# Endeavor is managed by Helm
+# These are values that are set for the helm chart.
+
+# Name overrides: by default the name for most objects will be release-endeavor. It is
+# recommended to create a descriptive release name, but if you must override the names
+# separate from the release, you can set nameOverride. To remove the -endeavor suffix
+# set the fullnameOverride to the name you want.
+fullnameOverride: "terps"
+
+# Environment should be set to "demo", "development", "staging", or "production".
+environment: "production"
+
+global:
+  origins:
+  - https://terps.rotational.app
+  - https://auth.terps.rotational.app
+
+  issuer: https://auth.terps.rotational.app
+
+# Set the Endeavor specific configuration.
+endeavor:
+  # Maintenance mode can be used to run the pod without starting the serice for debugging
+  maintenance: false
+
+  origin: https://terps.rotational.app
+
+  inference:
+    endpointURL: https://openrouter.ai/api/v1
+
+  radish:
+    workers: 8
+    queueSize: 128
+
+  coffer:
+    enabled: true
+
+  # Application blobs in GCS (S3 interop; shared bucket endeavor.rotational.io).
+  blobs:
+    uri: s3://endeavor.rotational.io/terps/blobs?endpoint=https://storage.googleapis.com&region=auto
+
+  # Horizon task archive stays ephemeral; beacon bootstraps on each pod start.
+  tasks:
+    enableLoader: true
+
+    # Beacon (task zip bootstrap and daily refresh).
+    beacon:
+      beaconUrl: "https://beacon.rotational.app"
+      beaconTTL: "24h"
+      authSecret:
+        secretName: global-endeavor
+        usernameKey: beaconUsername
+        passwordKey: beaconPassword
+
+ingress:
+  enabled: true
+  tls:
+    secretName: tls-certs
+
+secrets:
+  # Secrets are generated and maintained by Genoa
+  create: false
+  databaseURL:
+    secretName: terps-endeavor
+    secretKey: databaseURL
+  cofferKeys:
+    secretName: terps-endeavor
+    secretKey: cofferKeys
+  # GCS HMAC: shared secret global-endeavor (all tenants).
+  aws:
+    secretName: global-endeavor
+    accessKeyIDKey: gcsAccessKey
+    secretAccessKeyKey: gcsSecret
+
+quarterdeck:
+  enabled: true
+
+  ingress:
+    enabled: true
+    tls:
+      secretName: tls-certs
+
+  quarterdeck:
+    app:
+      name: Terps Endeavor
+      webhookURI: http://terps.endeavor.svc.cluster.local:8000/v1/users/sync
+
+      # Use the default chart welcome email templates.
+      welcomeEmail:
+        create: false
+        configMap: quarterdeck-welcome-emails
+
+    org:
+      name: Terps
+      supportEmail: support@rotational.io
+
+    auth:
+      jwks:
+        secretKeyRef:
+          name: terps-quarterdeck
+          key: authKeys
+      loginURL: https://terps.rotational.app/login
+      logoutRedirect: https://terps.rotational.app/login
+      accessTokenTTL: 6h
+
+    email:
+      sender:
+        name: "Rotational Labs"
+        email: "support@rotational.io"
+
+      method: "sendgrid"
+
+      sendgrid:
+        apiKey:
+          secretKeyRef:
+            name: global-endeavor
+            key: sendgridAPIKey
+
+    securitytxt:
+      create: false
+      configMap: quarterdeck-securitytxt
+
+  secrets:
+    jwks:
+      secretRef: terps-quarterdeck-jwks
+
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+  storage:
+    database:
+      mountPath: /data/db
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 12Gi
+
+  opentelemetry:
+    serviceName: terps-quarterdeck
+    exporter:
+      traces: "otlp"
+      metrics: "otlp"
+      logs: "otlp"
+      otlp:
+        endpoint: http://o2c-gateway-collector.openobserve.svc.cluster.local:4317
+        protocol: grpc
+
+genoa:
+  enabled: true
+
+  genoa:
+    adminDatabaseURL:
+      secretName: admin-database-credentials
+    commands:
+    - kind: EnsureDatabase
+      args:
+        release: terps-endeavor
+        database:
+          secretName: terps-endeavor
+          secretKey: databaseURL
+    - kind: JWKSRotation
+      args:
+        maxKeys: 2
+        jwksSecret: terps-quarterdeck-jwks
+        quarterdeck:
+          secretName: terps-quarterdeck
+          secretKey: authKeys
+    - kind: CofferRotation
+      args:
+        coffer:
+          secretName: terps-endeavor
+          secretKey: cofferKeys
+        rotation: 87600h # Rotation currently not enabled, hence 10 year TTL
+        namespaces:
+          - ""
+          - "providers"
+          - "capabilities"
+
+resources:
+  requests:
+    cpu: 500m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+opentelemetry:
+  serviceName: terps-endeavor
+  exporter:
+    traces: "otlp"
+    metrics: "otlp"
+    logs: "otlp"
+    otlp:
+      endpoint: http://o2c-gateway-collector.openobserve.svc.cluster.local:4317
+      protocol: grpc
