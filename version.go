@@ -12,9 +12,9 @@ import (
 const (
 	VersionMajor         = 1
 	VersionMinor         = 1
-	VersionPatch         = 0
+	VersionPatch         = 1
 	VersionReleaseLevel  = "beta"
-	VersionReleaseNumber = 2
+	VersionReleaseNumber = 3
 )
 
 // Set the GitVersion via -ldflags="-X 'go.rtnl.ai/genoa.GitVersion=$(git rev-parse --short HEAD)'"
