@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: quarterdeck-securitytxt
+  namespace: endeavor
+data:
+  security.txt: |+
+    Contact: mailto:info@rotational.io
+    Expires: 2027-12-31T18:00:00.000Z
+    Encryption: https://keys.openpgp.org/vks/v1/by-fingerprint/8976758EC922C9362520F83E953A902549826C95
+    Preferred-Languages: en,en-US
+    Canonical: https://rotational.io/.well-known/security.txt
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: quarterdeck-welcome-emails
+  namespace: endeavor
+data:
+  welcome.txt: |+
+
+    - What is {{ .AppName }}?
+
+    {{ .AppName }} is a shared workspace where teams collaborate to prototype, evaluate, and deploy AI agents into real business workflows with full visibility and control.
+
+    - Why You're Invited
+
+    Your expertise is needed. {{ .OrgName }} is using {{ .AppName }} to work across technical and business teams to implement AI responsibly and transparently, and joining gives you access to the workflows, evaluations, and decisions that make that possible.
+
+    - Your role: {{ if .Role }}{{ .Role }}{{ else }}Team Member{{ end }}
+  welcome.html: |+
+
+    <h3 style="padding: 12px 0; margin: 0;">What is {{ .AppName }}?</h3>
+    <p style="padding: 12px 0; margin: 0;">{{ .AppName }} is a shared workspace where teams collaborate to prototype, evaluate, and deploy AI agents into real business workflows with full visibility and control.</p>
+
+    <h3 style="padding: 12px 0; margin: 0;">Why You're Invited</h3>
+    <p style="padding: 12px 0; margin: 0;">Your expertise is needed. {{ .OrgName }} is using {{ .AppName }} to work across technical and business teams to implement AI responsibly and transparently, and joining gives you access to the workflows, evaluations, and decisions that make that possible.</p>
+
+    <h3 style="padding: 12px 0; margin: 0;">Your role: {{ if .Role }}{{ .Role }}{{ else }}Team Member{{ end }}</h3>

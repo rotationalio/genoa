@@ -104,6 +104,7 @@ func (a *Admin) CreateDatabase(ctx context.Context, target *dsn.DSN) (err error)
 // prevent SQL injection attacks.
 const (
 	createRoleSQL     = `CREATE ROLE %s WITH LOGIN PASSWORD %s NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOREPLICATION NOBYPASSRLS`
+	grantSetRoleSQL   = `GRANT %s TO %s WITH SET TRUE`
 	createDatabaseSQL = `CREATE DATABASE %s OWNER %s ENCODING 'UTF8'`
 	revokePublicSQL   = `REVOKE ALL ON DATABASE %s FROM PUBLIC`
 	grantConnectSQL   = `GRANT CONNECT, TEMPORARY ON DATABASE %s TO %s`
@@ -116,23 +117,29 @@ func (a *Admin) createDatabase(ctx context.Context, target *dsn.DSN) (err error)
 	rolename := pgx.Identifier{target.User.Username}.Sanitize()
 	password := quoteEscape(pgx.Identifier{target.User.Password}.Sanitize())
 	if _, err = a.ExecContext(ctx, fmt.Sprintf(createRoleSQL, rolename, password)); err != nil {
-		return fmt.Errorf("failed to create role: %w", err)
+		return fmt.Errorf("failed to create role %s: %w", rolename, err)
+	}
+
+	// Grant the admin user the SET ROLE privilege
+	adminUser := pgx.Identifier{a.DSN.User.Username}.Sanitize()
+	if _, err = a.ExecContext(ctx, fmt.Sprintf(grantSetRoleSQL, rolename, adminUser)); err != nil {
+		return fmt.Errorf("failed to grant set role privilege on %s to %s: %w", rolename, adminUser, err)
 	}
 
 	// Create the database
 	database := pgx.Identifier{target.Path}.Sanitize()
 	if _, err = a.ExecContext(ctx, fmt.Sprintf(createDatabaseSQL, database, rolename)); err != nil {
-		return fmt.Errorf("failed to create database: %w", err)
+		return fmt.Errorf("failed to create database %s with owner %s: %w", database, rolename, err)
 	}
 
 	// Revoke public access to the database
 	if _, err = a.ExecContext(ctx, fmt.Sprintf(revokePublicSQL, database)); err != nil {
-		return fmt.Errorf("failed to revoke public access: %w", err)
+		return fmt.Errorf("failed to revoke public access to database %s: %w", database, err)
 	}
 
 	// Grant connect and temporary access to the role
 	if _, err = a.ExecContext(ctx, fmt.Sprintf(grantConnectSQL, database, rolename)); err != nil {
-		return fmt.Errorf("failed to grant connect and temporary access: %w", err)
+		return fmt.Errorf("failed to grant connect on %s to %s: %w", database, rolename, err)
 	}
 
 	return nil
