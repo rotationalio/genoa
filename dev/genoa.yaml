@@ -16,3 +16,9 @@ commands:
     - ""
     - capabilities
     - providers
+- kind: QuarterdeckSuperuser
+  args:
+    name: Rotational Support
+    email: support@rotational.io
+    secret:
+      name: demo-quarterdeck

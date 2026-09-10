@@ -30,8 +30,9 @@ var (
 
 func init() {
 	Register(func() Command { return new(EnsureDatabase) })
-	Register(func() Command { return new(JWKSRotation) })
 	Register(func() Command { return new(CofferRotation) })
+	Register(func() Command { return new(JWKSRotation) })
+	Register(func() Command { return new(QuarterdeckSuperuser) })
 }
 
 func Register(constructor Constructor) {

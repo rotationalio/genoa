@@ -43,7 +43,9 @@ const (
 )
 
 var (
+	// cSpell:disable
 	JWKSKeyRegex = regexp.MustCompile(`^[0-7][0-9A-HJKMNP-TV-Z]{25}\.pem$`)
+	//cSpell:enable
 )
 
 // JWKS creates signing keys for JWT tokens in Quarterdeck. If the secret resource
@@ -62,6 +64,10 @@ type JWKSRotation struct {
 	MountPath   string          `json:"mountPath" yaml:"mountPath"`     // The mount path to use for the quarterdeck secret.
 
 	keys *k8s.Secrets
+}
+
+func (j *JWKSRotation) Kind() string {
+	return "JWKSRotation"
 }
 
 func (j *JWKSRotation) Run(ctx context.Context, conf config.Config) (err error) {
@@ -150,10 +156,6 @@ func (j *JWKSRotation) Run(ctx context.Context, conf config.Config) (err error) 
 		slog.String("mount_path", j.MountPath),
 	)
 	return nil
-}
-
-func (j *JWKSRotation) Kind() string {
-	return "JWKSRotation"
 }
 
 func (j *JWKSRotation) Validate() error {
