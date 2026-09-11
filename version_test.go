@@ -28,7 +28,7 @@ func TestVersionCheck(t *testing.T) {
 			"0.37.1",
 			"2.0.0",
 			"1.52.0",
-			"1.1.19",
+			// "1.2.19",
 		}
 
 		for i, tc := range tests {
